@@ -24,7 +24,6 @@ namespace AgentLogProcessor
       };
       _process.Start();
       _process.WaitForExit();
-      Console.WriteLine(_process.StandardOutput.ReadToEnd());
     }
 
     private static ProcessStartInfo GetStartInfo()
@@ -32,10 +31,7 @@ namespace AgentLogProcessor
       return new ProcessStartInfo
         {
           FileName = Bash,
-          Arguments = $"-c \"adb logcat -d {PackageName}:* *:S\"", // > {OutputFileName}
-          UseShellExecute = false,
-          RedirectStandardOutput = true,
-          CreateNoWindow = true
+          Arguments = $"-c \"adb logcat -d {PackageName}:* *:S > {OutputFileName}\""
         };
     }
   }
