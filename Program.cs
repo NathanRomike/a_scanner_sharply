@@ -12,6 +12,7 @@ namespace AgentLogProcessor
     public static void Main(string[] args)
     {
       ConnectLogcatBuffer();
+      ParseLogFile();
     }
 
     private static void ConnectLogcatBuffer()
@@ -39,6 +40,11 @@ namespace AgentLogProcessor
           FileName = "/bin/bash",
           Arguments = $"-c \"adb logcat -d {PackageName}:* *:S > {OutputFileName} && adb logcat -c\""
         };
+    }
+
+    private static void ParseLogFile()
+    {
+      
     }
   }
 }
