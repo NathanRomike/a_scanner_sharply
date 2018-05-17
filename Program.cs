@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -46,64 +47,41 @@ namespace AgentLogProcessor
 
     private static void ParseLogFile()
     {
-      int requestErrorCounter, activityTraceCounter, attributeCounter, eventCounter, harvestConnects;
-      var requestCounter = requestErrorCounter = activityTraceCounter = attributeCounter = eventCounter = harvestConnects = 0;
-      
-      string line;
+      var harvestConnects = 0;
+
       var file = new StreamReader(OutputFileName);
+      string line;
+      var filterDictionary = new Dictionary<string, int[]>
+      {
+//      Key = unique segment, Value = [0]Char count from end of log line to number in log [1]Instance counter
+        {"HTTP errors", new[] {14, 0}},
+        {"HTTP transactions", new[] {20, 0}},
+        {"activity traces", new[] {18, 0}},
+        {"session attributes", new[] {22, 0}},
+        {"analytics events", new[] {19, 0}}
+      };
+
       while ((line = file.ReadLine()) != null)
       {
-//        TODO: this calls for a hash map with each node containing 3 attributes:
-//         - string of unique segment from log line (like 'HTTP transactions')
-//         - int for length between the end of the log line and the number logged
-//         - int counter for that data type
-//        TODO: then iterate through that hashmap and if line contain unique segment => try to substring, and reassign with that int
-        
-        if (!line.Contains("Harvester: ")) continue;
+        foreach (var filter in filterDictionary)
+        {
+          if (!line.Contains(filter.Key)) continue;
+          if (int.TryParse(line.Substring(line.Length - filter.Value[0], 2).Trim(), out filter.Value[1])) continue;
+          Console.WriteLine("Unable to parse: " + line);
+        }
         
         if (line.Contains("Harvester: connected"))
         {
           harvestConnects++;
         }
-
-        if (line.Contains("HTTP transactions"))
-        {
-          requestCounter++;
-        }
-        
-        if (line.Contains("HTTP errors"))
-        {
-          requestErrorCounter++;
-        }     
-        
-        if (line.Contains("activity traces"))
-        {
-          activityTraceCounter++;
-        }
-
-        if (line.Contains("session attributes"))
-        {
-          if (!int.TryParse(line.Substring(line.Length - 22, 2).Trim(), out attributeCounter))
-          {
-            Console.WriteLine("Unable to parse attribute string:" + line.Substring(line.Length - 20, 2).Trim());
-            Console.WriteLine(line);
-          }
-        }
-        
-        if (line.Contains("analytics events"))
-        {
-          if (!int.TryParse(line.Substring(line.Length - 19, 2).Trim(), out eventCounter))
-          {
-            Console.WriteLine("Unable to parse analytics events string:" + line.Substring(line.Length - 19, 2).Trim());
-            Console.WriteLine(line);
-          }
-        }
       }
       file.Close();
-      
-      Console.WriteLine($"There were {harvestConnects} agent payloads sent.");
-      Console.WriteLine($"{attributeCounter} total session attributes");
-      Console.WriteLine($"{eventCounter} total events");
+
+      Console.WriteLine($"The agent posted data {harvestConnects} times.");
+      foreach (var filter in filterDictionary)
+      {
+        Console.WriteLine($"{filter.Value[1]} {filter.Key} reported");
+      }
     }
   }
 }
