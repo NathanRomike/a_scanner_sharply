@@ -51,22 +51,27 @@ namespace AgentLogProcessor
 
       var file = new StreamReader(OutputFileName);
       string line;
-      var filterDictionary = new Dictionary<string, int[]>
+
+      var dataPosts = new List<DataPost>
       {
-//      Key = unique segment, Value = [0]Char count from end of log line to number in log [1]Instance counter
-        {"HTTP errors", new[] {14, 0}},
-        {"HTTP transactions", new[] {20, 0}},
-        {"activity traces", new[] {18, 0}},
-        {"session attributes", new[] {22, 0}},
-        {"analytics events", new[] {19, 0}}
+        new DataPost("HTTP errors", 14, 0),
+        new DataPost("HTTP transactions", 20, 0),
+        new DataPost("activity traces", 18, 0),
+        new DataPost("session attributes", 22, 0),
+        new DataPost("analytics events", 19, 0)
       };
 
       while ((line = file.ReadLine()) != null)
       {
-        foreach (var filter in filterDictionary)
+        foreach (var filter in dataPosts)
         {
-          if (!line.Contains(filter.Key)) continue;
-          if (int.TryParse(line.Substring(line.Length - filter.Value[0], 2).Trim(), out filter.Value[1])) continue;
+          if (!line.Contains(filter.Descriptor)) continue;
+          var total = 0;
+          if (int.TryParse(line.Substring(line.Length - filter.IndexFromEnd, 2).Trim(), out total))
+          {
+            filter.AddToCount(total);
+            continue;
+          }
           Console.WriteLine("Unable to parse: " + line);
         }
         
@@ -77,10 +82,10 @@ namespace AgentLogProcessor
       }
       file.Close();
 
-      Console.WriteLine($"The agent posted data {harvestConnects} times.");
-      foreach (var filter in filterDictionary)
+      Console.WriteLine($"The agent made {harvestConnects} data posts.");
+      foreach (var filter in dataPosts)
       {
-        Console.WriteLine($"{filter.Value[1]} {filter.Key} reported");
+        Console.WriteLine($"{filter.Count} {filter.Descriptor} reported");
       }
     }
   }
