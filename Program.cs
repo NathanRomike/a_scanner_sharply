@@ -11,11 +11,22 @@ namespace AgentLogProcessor
     private const string PackageName = "com.newrelic.android";
     private const string OutputFileName = "runtime.log";
     private static Process _process;
+    private static int _harvestConnects = 0;
+
+    private static readonly List<DataPost> DataPosts = new List<DataPost>
+    {
+      new DataPost("HTTP errors", 14, 0),
+      new DataPost("HTTP transactions", 20, 0),
+      new DataPost("activity traces", 18, 0),
+      new DataPost("session attributes", 22, 0),
+      new DataPost("analytics events", 19, 0)
+    };
     
     public static void Main(string[] args)
     {
       ConnectLogcatBuffer();
       ParseLogFile();
+      ReportResults();
     }
 
     private static void ConnectLogcatBuffer()
@@ -47,45 +58,32 @@ namespace AgentLogProcessor
 
     private static void ParseLogFile()
     {
-      var harvestConnects = 0;
-
       var file = new StreamReader(OutputFileName);
       string line;
 
-      var dataPosts = new List<DataPost>
-      {
-        new DataPost("HTTP errors", 14, 0),
-        new DataPost("HTTP transactions", 20, 0),
-        new DataPost("activity traces", 18, 0),
-        new DataPost("session attributes", 22, 0),
-        new DataPost("analytics events", 19, 0)
-      };
-
       while ((line = file.ReadLine()) != null)
       {
-        foreach (var filter in dataPosts)
-        {
-          if (!line.Contains(filter.Descriptor)) continue;
-          var total = 0;
-          if (int.TryParse(line.Substring(line.Length - filter.IndexFromEnd, 2).Trim(), out total))
-          {
-            filter.AddToCount(total);
-            continue;
-          }
-          Console.WriteLine("Unable to parse: " + line);
-        }
-        
         if (line.Contains("Harvester: connected"))
         {
-          harvestConnects++;
+          _harvestConnects++;
+          continue;;
+        }
+        
+        foreach (var filter in DataPosts)
+        {
+          if (!line.Contains(filter.Descriptor)) continue;
+          filter.AddToCount(filter.GetCountFromString(line));
         }
       }
       file.Close();
+    }
 
-      Console.WriteLine($"The agent made {harvestConnects} data posts.");
-      foreach (var filter in dataPosts)
+    private static void ReportResults()
+    {
+      Console.WriteLine($"The agent made {_harvestConnects} data posts.");
+      foreach (var filter in DataPosts)
       {
-        Console.WriteLine($"{filter.Count} {filter.Descriptor} reported");
+        Console.WriteLine($"{filter.TotalCount} {filter.Descriptor} reported");
       }
     }
   }

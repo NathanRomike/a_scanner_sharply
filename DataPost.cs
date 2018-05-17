@@ -3,19 +3,25 @@
     public class DataPost
     {
         public readonly string Descriptor;
-        public readonly int IndexFromEnd;
-        public int Count;
+        private readonly int _indexToValueFromEnd;
+        public int TotalCount;
 
-        public DataPost(string descriptor, int indexFromEnd, int count)
+        public DataPost(string descriptor, int indexToValueFromEnd, int totalCount)
         {
             Descriptor = descriptor;
-            IndexFromEnd = indexFromEnd;
-            Count = count;
+            _indexToValueFromEnd = indexToValueFromEnd;
+            TotalCount = totalCount;
         }
 
         public void AddToCount(int addValue)
         {
-            Count = Count + addValue;
+            TotalCount = TotalCount + addValue;
+        }
+
+        public int GetCountFromString(string logLine)
+        {
+            var total = 0;
+            return int.TryParse(logLine.Substring(logLine.Length - _indexToValueFromEnd, 2).Trim(), out total) ? total : 0;
         }
     }
 }
