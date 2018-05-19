@@ -21,7 +21,7 @@
         public int GetCountFromString(string logLine)
         {
             var total = 0;
-            return int.TryParse(logLine.Substring(logLine.Length - _indexToValueFromEnd, 2).Trim(), out total) ? total : 0;
+            return int.TryParse(logLine.Substring(logLine.Length - _indexToValueFromEnd, 2).Trim(), out total) ? total : -1;
         }
     }
 }
