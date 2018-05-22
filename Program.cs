@@ -34,10 +34,15 @@ namespace AgentLogProcessor
     {
       ConnectLogcatBuffer();
       ParseLogFile();
-      PrintResults();
       
-      var reportResults = WebSocketConnect();
-      reportResults.Wait();
+      Console.WriteLine("formatted results:");
+      Console.WriteLine(FormatResults());
+      
+      var connected = ConnectToWebSocket();
+      connected.Wait();
+      
+      var messageSent = SendString(_clientWebSocket, FormatResults(), CancellationToken.None);
+      messageSent?.Wait();
     }
 
     private static void ConnectLogcatBuffer()
@@ -95,31 +100,36 @@ namespace AgentLogProcessor
       file.Close();
     }
 
-    private static void PrintResults()
+    private static string FormatResults()
     {
-      Console.WriteLine($"The agent made {_harvestConnects} data posts, over {_sessionsCaptured} sessions");
+      var stringBuilder = new StringBuilder();
+      stringBuilder.AppendLine($"harvest connections:{_harvestConnects}, ");
+      stringBuilder.AppendLine($"sessions captured:{_sessionsCaptured}, ");
+      
       foreach (var filter in DataPosts)
       {
-        Console.WriteLine($"{filter.TotalCount} {filter.Descriptor} reported");
+        var delimiter = "";
+        if (!DataPosts.IndexOf(filter).Equals(DataPosts.Count - 1))
+        {
+          delimiter = ", ";
+        }
+        stringBuilder = stringBuilder.AppendLine($"{filter.Descriptor}:{filter.TotalCount}{delimiter}");
       }
+      return stringBuilder.ToString();
     }
 
-    private static async Task WebSocketConnect()
+    private static Task ConnectToWebSocket()
     {
       using (_clientWebSocket = new ClientWebSocket())
       {
         var serverUri = new Uri(WsUrl);
-        await _clientWebSocket.ConnectAsync(serverUri, CancellationToken.None);
-        if (_clientWebSocket.State == WebSocketState.Open)
-        {
-          var messageSent = SendString(_clientWebSocket, DataPosts.ToString(), CancellationToken.None);
-          messageSent.Wait();
-        }
+        return _clientWebSocket.ConnectAsync(serverUri, CancellationToken.None);
       }
     }
 
     private static Task SendString(WebSocket webSocket, string dataToSend, CancellationToken cancellationToken)
     {
+      if (_clientWebSocket.State != WebSocketState.Open) return null;
       var encoded = Encoding.UTF8.GetBytes(dataToSend);
       var buffer = new ArraySegment<byte>(encoded, 0 , encoded.Length);
       return webSocket.SendAsync(buffer, WebSocketMessageType.Text, true, cancellationToken);
