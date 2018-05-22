@@ -19,6 +19,8 @@ namespace AgentLogProcessor
     private static int _harvestConnects = 0;
     private static int _sessionsCaptured = 0;
     
+    private static ClientWebSocket _clientWebSocket;
+    
     private static readonly List<DataPost> DataPosts = new List<DataPost>
     {
       new DataPost("HTTP errors", 14, 0),
@@ -32,7 +34,9 @@ namespace AgentLogProcessor
     {
       ConnectLogcatBuffer();
       ParseLogFile();
-      var reportResults = ReportResults();
+      PrintResults();
+      
+      var reportResults = WebSocketConnect();
       reportResults.Wait();
     }
 
@@ -91,33 +95,34 @@ namespace AgentLogProcessor
       file.Close();
     }
 
-    private static async Task ReportResults()
+    private static void PrintResults()
     {
       Console.WriteLine($"The agent made {_harvestConnects} data posts, over {_sessionsCaptured} sessions");
       foreach (var filter in DataPosts)
       {
         Console.WriteLine($"{filter.TotalCount} {filter.Descriptor} reported");
       }
+    }
 
-      using (var clientWebSocket = new ClientWebSocket())
+    private static async Task WebSocketConnect()
+    {
+      using (_clientWebSocket = new ClientWebSocket())
       {
         var serverUri = new Uri(WsUrl);
-        await clientWebSocket.ConnectAsync(serverUri, CancellationToken.None);
-        while (clientWebSocket.State == WebSocketState.Open)
+        await _clientWebSocket.ConnectAsync(serverUri, CancellationToken.None);
+        if (_clientWebSocket.State == WebSocketState.Open)
         {
-          Console.Write("Input message ('exit' to exit): ");
-          var userMessage = Console.ReadLine();
-          if (userMessage == "exit")
-          {
-            break;
-          }
-
-          if (userMessage != null)
-          {
-            var dataPacket = Encoding.UTF8.GetBytes(userMessage);
-          }
+          var messageSent = SendString(_clientWebSocket, DataPosts.ToString(), CancellationToken.None);
+          messageSent.Wait();
         }
       }
+    }
+
+    private static Task SendString(WebSocket webSocket, string dataToSend, CancellationToken cancellationToken)
+    {
+      var encoded = Encoding.UTF8.GetBytes(dataToSend);
+      var buffer = new ArraySegment<byte>(encoded, 0 , encoded.Length);
+      return webSocket.SendAsync(buffer, WebSocketMessageType.Text, true, cancellationToken);
     }
   }
 }
