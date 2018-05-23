@@ -38,11 +38,12 @@ namespace AgentLogProcessor
       Console.WriteLine("formatted results:");
       Console.WriteLine(FormatResults());
       
-      var connected = ConnectToWebSocket();
-      connected.Wait();
+      ConnectToWebSocket().Wait();
       
-      var messageSent = SendString(_clientWebSocket, FormatResults(), CancellationToken.None);
-      messageSent?.Wait();
+      SendString(_clientWebSocket, FormatResults(), CancellationToken.None).Wait();
+
+      CloseWebsocket(_clientWebSocket).Wait();
+      Console.WriteLine("Good night, and good luck.");
     }
 
     private static void ConnectLogcatBuffer()
@@ -133,6 +134,11 @@ namespace AgentLogProcessor
       var encoded = Encoding.UTF8.GetBytes(dataToSend);
       var buffer = new ArraySegment<byte>(encoded, 0 , encoded.Length);
       return webSocket.SendAsync(buffer, WebSocketMessageType.Text, true, cancellationToken);
+    }
+
+    private static Task CloseWebsocket(WebSocket webSocket)
+    {
+      return webSocket.CloseOutputAsync(WebSocketCloseStatus.NormalClosure, string.Empty, new CancellationToken(true));
     }
   }
 }
