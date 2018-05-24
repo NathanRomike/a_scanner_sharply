@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgentLogProcessor", "AgentLogProcessor.csproj", "{F5DBF6B2-1EEF-487F-A81B-8BF2ECCF5642}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LogProcessor.Tests", "..\LogProcessor.Tests\LogProcessor.Tests.csproj", "{A4B38AD0-5830-4571-8718-2B4BEEF9A317}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F5DBF6B2-1EEF-487F-A81B-8BF2ECCF5642}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F5DBF6B2-1EEF-487F-A81B-8BF2ECCF5642}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F5DBF6B2-1EEF-487F-A81B-8BF2ECCF5642}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F5DBF6B2-1EEF-487F-A81B-8BF2ECCF5642}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A4B38AD0-5830-4571-8718-2B4BEEF9A317}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A4B38AD0-5830-4571-8718-2B4BEEF9A317}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A4B38AD0-5830-4571-8718-2B4BEEF9A317}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A4B38AD0-5830-4571-8718-2B4BEEF9A317}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
